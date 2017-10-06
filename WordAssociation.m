@@ -1,7 +1,7 @@
 function WordAssociation()
 global propComplete V Ngroups Words ptsEarned Nwords threshold
-subject = input('What is your name?');
 threshold = 1;
+subject = input('What is your name?');
     try 
         Ngroups = [];
         V = struct();
@@ -95,52 +95,24 @@ plotUIpanels
     end
 
     function newTrialData()
-        global Word Group otherGroups iW c
-        % Pick a random Word:
+        global Word Group otherGroups iW
+        % Pick a random Word that doesn't meet the threshold:
         s = threshold;
-        c = 1;
         while s>= threshold
             iW = ceil(rand(1)*Nwords);
             s = sum(Words{iW,4});
-            c = c+1;
-            if c == 2000
-                figure(99)
-                clf
-                Congrats = uicontrol('Style','text',...
-                    'String', 'Congratulations! You are moving up to the definition matching round.',...
-                    'Position', [300 0 500 300]);
-                    set (Congrats, 'FontWeight', 'Bold', 'FontSize', 30)
-                break
-            else
-            end
         end
-        % End of training (When we can't find a word randomly that doesn't
-        % have a positive score after 2000 iterations of looking)
-        if c == 2000
-            figure(100)
-                set(gcf,'Name', 'Performance Diagnostic', 'Position', [440 378 560 420])
-                sortrows(Words, [5,7], 'descend')
-                TestWord = Words(:,1);
-                nClicks = [Words{:,5}]';
-                TimeOnWord = [Words{:,7}]';
-                tmp=table2cell(table(TestWord,nClicks,TimeOnWord));
-                t=uitable('Parent', 100, 'Units', 'Normalized', 'Position', [0 0 1 1]);
-                t.Data = tmp;
-            return
-        else
-        end
-                    
         Word = Words(iW,1);
         Group = Words(iW,3);
-        % Some words are in two groups so we want to exclude them from the possible incorrect options.
-        % Thus generate a term called potentialGroups
-        potentialGroups= Words((strcmp(Words(:,1),Word)),3); 
-            % And 4 other random groups:
+        % Pick 4 other incorrect options. Some words have more than one
+        % group (i.e. potentialCorrectAnswers), so we have to exclude those 
+        % options from the possible incorrect options:
+        potentialCorrectAnswers= Words((strcmp(Words(:,1),Word)),3); 
             otherGroups = {};
             while numel(otherGroups) < 4
                 ioG = ceil(rand(1)*Ngroups);
                 otherGroup = {V(ioG).Group};
-                if any(strcmp(otherGroup,[potentialGroups;otherGroups]))
+                if any(strcmp(otherGroup,[potentialCorrectAnswers;otherGroups]))
                 else
                     otherGroups = [otherGroups; V(ioG).Group];
                 end
@@ -153,8 +125,8 @@ plotUIpanels
         beep
         ptsEarned = -2+checkDef;
         checkDef = 0;
-        %Note: The word can appear more than once on the list, but we are
-        %keeping a separate tally of scores for each one
+        % Note: The word can belong to more than 1 group, but we are
+        % keeping a separate tally of scores for each. 
         Words{iW,4} = [Words{iW,4},-1];
             propComplete = sum(cellfun(@sum,[Words{:,4}]))/(Nwords*threshold);
         Words{iW,5} = numel(Words{iW,4});
@@ -173,6 +145,10 @@ plotUIpanels
         checkDef = 0;
         Words{iW,4} = [Words{iW,4},1];
             propComplete = sum(cellfun(@sum,[Words{:,4}]))/(Nwords*threshold);
+            if propComplete == 100 % Criteria for completetion
+                completeTraining
+            else
+            end
         Words{iW,5} = numel(Words{iW,4});
         Words{iW,6} = [Words{iW,6},RL];
         Words{iW,7} = sum(Words{iW,6});
@@ -181,7 +157,7 @@ plotUIpanels
         newTrialData
         plotUIpanels
     end
-    
+
     function defineWord(source, event)
         global iW checkDef 
         checkDef = -1;
@@ -201,4 +177,23 @@ plotUIpanels
         tmp = char(Words(iW,1));
         web(strcat('https://en.oxforddictionaries.com/definition/',tmp))
     end
+    
+    function completeTraining
+        figure(99)
+            clf
+            Congrats = uicontrol('Style','text',...
+                'String', strcat('Congratulations! Your time per word was: ', num2str(mean(sum([Words{:,7}])/length(Words))),'s'),...
+                'Position', [300 0 500 300]);
+                set (Congrats, 'FontWeight', 'Bold', 'FontSize', 20)
+        figure(100)
+            set(gcf,'Name', 'Performance Diagnostic', 'Position', [440 378 560 420])
+            Words = sortrows(Words, [5,7], 'descend');
+            TestWord = Words(:,1);
+            nClicks = [Words{:,5}]';
+            TimeOnWord = [Words{:,7}]';
+            tmp=table2cell(table(TestWord,nClicks,TimeOnWord));
+            t=uitable('Parent', 100, 'Units', 'Normalized', 'Position', [0 0 1 1]);
+            t.Data = tmp;
+        return
+    end     
 end
