@@ -14,7 +14,8 @@ By default, the threshold is set to 1 (the lowest setting), but you can programm
   You will see the cell variable 'Words' that keeps an ongoing log of your individualized training after each click. A simplified version of this will be displayed at the end in order of what you found most challenging to least. This can be used for your diagnostic purposes, but also for a possible definition matching version of this software, depending on how people like the program. Send comments and feedback to my gmail: rashecl
   
 ** Extras: **
-  Also included in this repository is code to programmtically  
+  Also included in this repository is code to programmtically define the words into the database the WordAssociation code utilizes by parsing the definitions from OED's website. This is not essential unless you want to create a different word list, as the default database is loaded into the program to get you up and running. 
+  
 MIT License
 
 Copyright (c) 2017 Rashed Harun
