@@ -3,10 +3,11 @@ global propComplete V Ngroups Words ptsEarned Nwords threshold
 threshold = 1;
 subject = input('What is your name?');
     try 
-        Ngroups = [];
-        V = struct();
-        Words = {};
-        load(strcat('VocabData',subject,'.mat'))
+        keyboard
+        tmp=load(strcat('VocabData',subject,'.mat'));
+        V = tmp.V;
+        Words = tmp.Words;
+        Ngroups = tmp.Ngroups;
         Nwords = length(Words);
     catch
         Ngroups = [];
@@ -14,10 +15,9 @@ subject = input('What is your name?');
         Words = {};
         load('VocabData.mat')
         Nwords = length(Words);
-        save(strcat('VocabData',subject,'.mat'))
+        save(strcat('VocabData',subject,'.mat'),'Words','V','Ngroups')
     end
-        
-
+e
 propComplete = 0;
 ptsEarned = 0;
 newTrialData
@@ -95,7 +95,7 @@ plotUIpanels
     end
 
     function newTrialData()
-        global Word Group otherGroups iW
+        global Word Group otherGroups iW Def
         % Pick a random Word that doesn't meet the threshold:
         s = threshold;
         while s>= threshold
@@ -103,6 +103,7 @@ plotUIpanels
             s = sum(Words{iW,4});
         end
         Word = Words(iW,1);
+        Def = Words(iW,2);
         Group = Words(iW,3);
         % Pick 4 other incorrect options. Some words have more than one
         % group (i.e. potentialCorrectAnswers), so we have to exclude those 
@@ -120,9 +121,17 @@ plotUIpanels
     end
 
     function incorrect(source, event)
-        global iW newTrialTimer checkDef 
+        global iW newTrialTimer checkDef Group Word Def
         RL=toc(newTrialTimer);
         beep
+        figure (99)
+            clf
+            str=[char(Word), ' : ', char(Group), newline, char(Def)];
+            PreviousAnswer = uicontrol('Style','text',...
+                    'String', str,...
+                    'Position', [50 300 1000 150]);
+            set (PreviousAnswer, 'FontWeight', 'Bold', 'FontSize', 24, 'BackGroundColor', 'r')
+            pause (numel(str)/20 + 1)
         ptsEarned = -2+checkDef;
         checkDef = 0;
         % Note: The word can belong to more than 1 group, but we are
@@ -133,7 +142,7 @@ plotUIpanels
         Words{iW,6} = [Words{iW,6},RL];
         Words{iW,7} = sum(Words{iW,6});
         assignin('base','Words', Words)
-        save(strcat('VocabData',subject,'.mat'))
+        save(strcat('VocabData',subject,'.mat'),'Words','V','Ngroups')
         newTrialData
         plotUIpanels
     end
@@ -149,11 +158,13 @@ plotUIpanels
                 completeTraining
             else
             end
+            
         Words{iW,5} = numel(Words{iW,4});
         Words{iW,6} = [Words{iW,6},RL];
+        
         Words{iW,7} = sum(Words{iW,6});
         assignin('base','Words', Words)
-        save(strcat('VocabData',subject,'.mat'))
+        save(strcat('VocabData',subject,'.mat'),'Words','V','Ngroups')
         newTrialData
         plotUIpanels
     end
@@ -169,7 +180,7 @@ plotUIpanels
         Words{iW,4} = [Words{iW,4},-1];
         Words{iW,5} = numel(Words{iW,4});
         assignin('base','Words', Words)
-        save(strcat('VocabData',subject,'.mat'))
+        save(strcat('VocabData',subject,'.mat'),'Words','V','Ngroups')
     end
 
     function openLink(source,event)
